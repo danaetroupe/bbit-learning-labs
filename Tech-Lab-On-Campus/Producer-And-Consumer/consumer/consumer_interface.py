@@ -29,18 +29,18 @@ class mqConsumerInterface:
 
     def setupRMQConnection(self) -> None:
         # Set-up Connection to RabbitMQ service
-        conParams = pika.URLParameters(os.environ[self.routing_key])
+        conParams = pika.URLParameters(os.environ["AMQP_URL"])
         self.connection = pika.BlockingConnection(parameters=conParams)
 
         # Establish Channel
         self.channel = self.connection.channel()
         
         # Create Queue if not already present
-        if not self.queue:
+        if not hasattr(self, 'queue'):
             self.queue = self.channel.queue_declare(queue=self.queue_name)
         
         # Create the exchange if not already present
-        if not self.exchange:
+        if not hasattr(self, 'exchange'):
             self.exchange = self.channel.exchange_declare(self.exchange_name)
 
         # Bind Binding Key to Queue on the exchange
@@ -55,11 +55,11 @@ class mqConsumerInterface:
         )
     
     def on_message_callback(
-        self, method_frame, header_frame, body
+        self, channel, method_frame, header_frame, body
     ) -> None:
         # Acknowledge message
-        self.channel.basic_ack(method_frame.delivery_tag, False)
-        self.channel.basic_ack(header_frame.delivery_tag, False)
+        channel.basic_ack(method_frame.delivery_tag, False)
+        #channel.basic_ack(header_frame.delivery_tag, False)
         
         #Print message (The message is contained in the body parameter variable)
         print(body)
